@@ -181,7 +181,7 @@ michaelServesByGame <- michaelServes %>%
 
 
 
-michaelServesByGame$in_out <- ifelse(michaelServesByGame$in_out==1, "Out", "In")
+michaelServesByGame$in_out <- ifelse(michaelServesByGame$in_out==1, "In", "Out")
 
 michaelServes$ballSpeed <- as.numeric(michaelServes$ballSpeed)
 
@@ -213,11 +213,16 @@ p2 <- court +
 
 ```
 
-# Tennis: Serving
+# Tennis Serve Speed During a Match
 
-```{r pressure, echo=FALSE, fig.height=7, fig.width=15}
+```{r pressure, echo=FALSE, fig.height=6.5, fig.width=15}
 grid.arrange(p1, p2, ncol=2)
 ```
 
-- 2nd serves tend to be slower than 1st serves but are hit in more often
-- Over time, players get tired and serve slower
+\begin{flushright}
+Source: Francis, M (2020, July 9). [Tennis Singles Match] Retrieved from https://github.com/MichaelFrancis23/MSDS-455-Data-Visualization/blob/master/Assignment\%201/20191012-123330.json
+\end{flushright}
+
+- Data was taken from an In/Out tennis camera on 10/12/2019 for one of my tennis matches, net balls are not captured.
+- 2nd serves tend to be slower than 1st serves but are hit in more often. This corresponds with the average lower speed of serves called in.
+- As a match progresses players tire and serve speed decreases
