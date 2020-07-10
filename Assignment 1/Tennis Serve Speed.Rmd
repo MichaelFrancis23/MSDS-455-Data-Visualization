@@ -1,0 +1,223 @@
+---
+title: "Assignment 1 - Temporal Data"
+author: "Michael Francis"
+output: pdf_document
+classoption: landscape
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+library(readxl)
+library(tidyverse)
+library(jsonlite)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(grid)
+
+### UPDATE THIS ####
+date <- "2019-10-12"
+
+
+inOut <- fromJSON(txt = "C:/Users/mgffr/OneDrive/Desktop/Tennis/InOut/Singles/20191012-123330.json",flatten=T)
+
+#net and midline at 0,0
+#serve box is (-21, 0) to (-21, 13.5), (-21, 0) to (-21, -13.5), (21, 0) to (21, 13.5), (21, 0) to (21, -13.5),
+#baseline at (-39, 13.5) to (-39, -13.5) and (39, 13.5) to (39, -13.5)
+
+
+out_bounds <- data.frame(
+  x = c(-39, 39, 39, -39, -39),
+  y = c(18, 18, -18, -18, 18)
+)
+
+t_lines <- data.frame(
+  x = c(21, 21, 21, -21, -21, -21),
+  y = c(-13.5, 13.5, 0, 0, -13.5, 13.5)
+)
+
+court <- ggplot() +
+  geom_path(data = out_bounds, aes(x = x, y = y)) +
+  geom_path(data = t_lines, aes(x = x, y = y)) +
+  geom_path(aes(x = c(-39, 39), y = c(13.5, 13.5))) + # lower singles lines
+  geom_path(aes(x = c(-39, 39), y = c(-13.5, -13.5))) + # upper singles lines
+  geom_path(aes(x = c(0,0), y = c(18, -18)), lty = 2) + # net line
+  ylim(c(-20, 20)) + xlim(c(-50, 50)) +
+  scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+
+shots <- inOut$shots
+shots$x <- as.numeric(shots$x)
+shots$y <- as.numeric(shots$y)
+shots$playingx <- as.numeric(shots$playingx)
+shots$playingy <- as.numeric(shots$playingy)
+shots$receivingx <- as.numeric(shots$receivingx)
+shots$receivingy <- as.numeric(shots$receivingy)
+
+
+shots$Time <- NA
+shots$Time <- as.POSIXct(as.numeric(shots$timestamp), origin="1970-01-01", tz="UTC") 
+
+
+shots$TimeSinceLast <- NA
+for(i in 1:nrow(shots)){
+  if(i==1){
+    shots$TimeSinceLast[i] <- 0
+  }else{
+    shots$TimeSinceLast[i] <- as.numeric(difftime(shots$Time[i], shots$Time[i-1], units = "secs"))
+  }
+}
+
+head(shots[order(-shots$TimeSinceLast),c(23,24)], 15)
+serves <-subset(shots, shots$lineCallType!=0) 
+servesNew <- serves[,c(6,13,23,24)]
+x <- head(serves[order(-serves$TimeSinceLast),c(23,24)], 15)
+
+
+#warm-up & 1, 2&3, 4&5, 6&1, 2&3, 4&5, 6&7
+#109 (98)   , 178, 213, 231, 290,    , 
+#                      (255)
+
+# warmup 97, game 1 108 (michael = inOut$playerID)
+# game 2 147, game 3 177 (michael != inOut$playerID)
+# game 4 204, game 5 230 (michael = inOut$playerID)
+# game 6 254, game 1 289 (michael != inOut$playerID)
+# game 2 333, game 3 368 (michael = inOut$playerID)
+# game 4 388, game 5 417 (michael != inOut$playerID)
+# game 6 443, game 7 rest (michael = inOut$playerID)
+
+rm(serves, servesNew); gc()
+
+shotsTest <- shots
+
+for(i in 1:nrow(shots)){
+  if(shots$playingPlayerID[i]==inOut$playerID & i<=108){
+    shots$playingPlayerID[i] <- "Michael"
+  }else if(shots$playingPlayerID[i]!=inOut$playerID & i<=177 & i>108){
+    shots$playingPlayerID[i] <- "Michael"
+  }else if(shots$playingPlayerID[i]==inOut$playerID & i<=230 & i>177){
+    shots$playingPlayerID[i] <- "Michael"
+  }else if(shots$playingPlayerID[i]!=inOut$playerID & i<=289 & i>230){
+    shots$playingPlayerID[i] <- "Michael"
+  }else if(shots$playingPlayerID[i]==inOut$playerID & i<=368 & i>389){
+    shots$playingPlayerID[i] <- "Michael"
+  }else if(shots$playingPlayerID[i]!=inOut$playerID & i<=417 & i>368){
+    shots$playingPlayerID[i] <- "Michael"
+  }else if(shots$playingPlayerID[i]==inOut$playerID & i<=nrow(shots) & i>417){
+    shots$playingPlayerID[i] <- "Michael"
+  }else{
+    shots$playingPlayerID[i] <- "Ben Ginster"
+  }
+}
+
+for(i in 1:nrow(shots)){
+  if(shots$receivingPlayerID[i]==inOut$playerID & i<=108){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else if(shots$receivingPlayerID[i]!=inOut$playerID & i<=177 & i>108){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else if(shots$receivingPlayerID[i]==inOut$playerID & i<=230 & i>177){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else if(shots$receivingPlayerID[i]!=inOut$playerID & i<=289 & i>230){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else if(shots$receivingPlayerID[i]==inOut$playerID & i<=368 & i>289){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else if(shots$receivingPlayerID[i]!=inOut$playerID & i<=417 & i>368){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else if(shots$receivingPlayerID[i]==inOut$playerID & i<=nrow(shots) & i>417){
+    shots$receivingPlayerID[i] <- "Michael"
+  }else{
+    shots$receivingPlayerID[i] <- "Ben Ginster"
+  }
+}
+
+shots$playingPlayerID <- ifelse(shots$playingPlayerID=="Michael", "Ben Ginster", "Michael")
+shots$receivingPlayerID <- ifelse(shots$receivingPlayerID=="Michael", "Ben Ginster", "Michael")
+
+shots$in_out <- ifelse(shots$in_out==2, 1, shots$in_out)
+
+shots$Game <- ifelse(as.numeric(row.names(shots)) <=97, 0, ifelse(
+  as.numeric(row.names(shots)) <=108, 1, ifelse(
+    as.numeric(row.names(shots)) <=147, 2, ifelse(
+      as.numeric(row.names(shots)) <=177, 3, ifelse(
+        as.numeric(row.names(shots)) <=204, 4, ifelse(
+          as.numeric(row.names(shots)) <=230, 5, ifelse(
+            as.numeric(row.names(shots)) <=254, 6, ifelse(
+              as.numeric(row.names(shots)) <=289, 7, ifelse(
+                as.numeric(row.names(shots)) <=333, 8, ifelse(
+                  as.numeric(row.names(shots)) <=368, 9, ifelse(
+                    as.numeric(row.names(shots)) <=388, 10, ifelse(
+                      as.numeric(row.names(shots)) <=417, 11, ifelse(
+                        as.numeric(row.names(shots)) <=443, 12, 13)))))))))))))
+
+
+
+
+
+
+michael <- subset(shots, shots$playingPlayerID=="Michael")
+
+michaelServes <- subset(michael, michael$lineCallType!=0) 
+michaelShots <- subset(michael, michael$lineCallType==0) 
+
+
+michaelServesByGame <- michaelServes %>%
+  select(Game, in_out, ballSpeed) %>%
+  group_by(Game, in_out) %>%
+  summarise(AvgBallSpeed = mean(as.numeric(ballSpeed), na.rm=T))
+
+
+
+
+
+michaelServesByGame$in_out <- ifelse(michaelServesByGame$in_out==1, "Out", "In")
+
+michaelServes$ballSpeed <- as.numeric(michaelServes$ballSpeed)
+
+
+
+
+
+
+p1 <- ggplot(michaelServesByGame, aes(x=factor(Game), y=AvgBallSpeed, group=in_out, color=in_out)) +
+  geom_line(aes(color=in_out)) +
+  geom_point(aes(color=in_out)) +
+  scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  ggtitle("Serve Speed by Service Game") +
+  theme(axis.title = element_text(), 
+        plot.title = element_text(hjust = 0.5)) + 
+  ylab('Avg Ball Speed') +
+  xlab('Game')  + labs(color='') 
+
+p2 <- court +
+  geom_point(data = michaelServes,
+             aes(x = x, y = y, colour = ballSpeed)
+  ) +
+  theme(legend.position = "bottom", 
+        plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Bounce Positions")  + 
+  labs(color='Ball Speed')  + 
+  scale_color_gradient(low="blue", high="red") 
+
+```
+
+# Tennis: Serving
+
+```{r pressure, echo=FALSE, fig.height=7, fig.width=15}
+grid.arrange(p1, p2, ncol=2)
+```
+
+- 2nd serves tend to be slower than 1st serves but are hit in more often
+- Over time, players get tired and serve slower
