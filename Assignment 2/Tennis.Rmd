@@ -1,0 +1,92 @@
+---
+title: "Assignment 2 - Categorical Data"
+author: "Michael Francis"
+output: pdf_document
+classoption: landscape
+---
+
+
+```{r setup, include=FALSE, warnings=FALSE, message=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+
+
+library(readxl)
+library(tidyverse)
+library(jsonlite)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(grid)
+
+# read in shots data from a practice on 10-11-2019, using in-out device and apple watch
+data <- read_csv("C:/Users/mgffr/OneDrive/Desktop/MSDS 455/MSDS-455-Data-Visualization/Assignment 2/shots.csv")
+
+#net and midline at 0,0
+#serve box is (-21, 0) to (-21, 13.5), (-21, 0) to (-21, -13.5), (21, 0) to (21, 13.5), (21, 0) to (21, -13.5),
+#baseline at (-39, 13.5) to (-39, -13.5) and (39, 13.5) to (39, -13.5)
+
+out_bounds <- data.frame(
+  x = c(-39, 39, 39, -39, -39),
+  y = c(18, 18, -18, -18, 18)
+)
+
+t_lines <- data.frame(
+  x = c(21, 21, 21, -21, -21, -21),
+  y = c(-13.5, 13.5, 0, 0, -13.5, 13.5)
+)
+
+court <- ggplot() +
+  geom_path(data = out_bounds, aes(x = x, y = y)) +
+  geom_path(data = t_lines, aes(x = x, y = y)) +
+  geom_path(aes(x = c(-39, 39), y = c(13.5, 13.5))) + # lower singles lines
+  geom_path(aes(x = c(-39, 39), y = c(-13.5, -13.5))) + # upper singles lines
+  geom_path(aes(x = c(0,0), y = c(18, -18)), lty = 2) + # net line
+  ylim(c(-20, 20)) + xlim(c(-50, 50)) +
+  #scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+michael <- subset(data, data$playingPlayerID=="Michael")
+michael$in_out <- ifelse(michael$in_out==1, "In", "Out")
+
+p1 <- ggplot(michael, aes(x=stroke, y=ballSpeed, fill=in_out)) +
+  geom_boxplot() +
+  scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  ggtitle("Ball Speed by Stroke and In/Out") +
+  theme(axis.title = element_text(), 
+        plot.title = element_text(hjust = 0.5)) + 
+  ylab('Avg Ball Speed') +
+  xlab('Game')  + labs(color='') 
+
+p2 <- court +
+  geom_point(data = michael,
+             aes(x = x, y = y, colour = stroke)
+  ) +
+  theme(legend.position = "bottom", 
+        plot.title = element_text(hjust = 0.5)) +
+  ggtitle("Tennis Stroke Bounce Positions")  + 
+  labs(color='Ball Speed')
+
+```
+
+# Tennis Serve Speed During a Match
+
+```{r plot, echo=FALSE, fig.height=6.5, fig.width=15, warnings=FALSE, message=FALSE}
+grid.arrange(p1, p2, ncol=2)
+```
+
+\begin{flushright}
+Source: Francis, M (2020, July 17). [Tennis Singles Match] Retrieved from https://github.com/MichaelFrancis23/MSDS-455-Data-Visualization/blob/master/Assignment\%201/20191012-123330.json
+\end{flushright}
+
+- Data was taken from an In/Out tennis camera on 10/11/2019 for one of my tennis practices using a ball machine.
+- 1st serves have a higher speed than 2nd serves, forehands have a higher speed than backhands, speed is more varied for shots hit out.
+- More serves than ground strokes are hit into the net, majority of shots hit to the right side of the court.
