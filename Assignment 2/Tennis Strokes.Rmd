@@ -77,7 +77,7 @@ p2 <- court +
 
 ```
 
-# Tennis Serve Speed During a Match
+# Tennis Ball Speed By Stroke
 
 ```{r plot, echo=FALSE, fig.height=6.5, fig.width=15, warnings=FALSE, message=FALSE}
 grid.arrange(p1, p2, ncol=2)
@@ -88,5 +88,5 @@ Source: Francis, M (2020, July 17). [Tennis Singles Match] Retrieved from https:
 \end{flushright}
 
 - Data was taken from an In/Out tennis camera on 10/11/2019 for one of my tennis practices using a ball machine.
-- 1st serves have a higher speed than 2nd serves, forehands have a higher speed than backhands, speed is more varied for shots hit out.
-- More serves than ground strokes are hit into the net, majority of shots hit to the right side of the court.
+- 1st serves have a higher speed than 2nd serves, forehands have a higher speed than backhands, and speed is more varied for shots hit out.
+- More serves than ground strokes are hit into the net and the majority of shots are hit to the right side of the court.
