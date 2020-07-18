@@ -84,7 +84,7 @@ grid.arrange(p1, p2, ncol=2)
 ```
 
 \begin{flushright}
-Source: Francis, M (2020, July 17). [Tennis Singles Match] Retrieved from https://github.com/MichaelFrancis23/MSDS-455-Data-Visualization/blob/master/Assignment\%201/20191012-123330.json
+Source: Francis, M (2020, July 17). [Tennis Singles Match] Retrieved from https://github.com/MichaelFrancis23/MSDS-455-Data-Visualization/blob/master/Assignment\%202/shots.csv
 \end{flushright}
 
 - Data was taken from an In/Out tennis camera on 10/11/2019 for one of my tennis practices using a ball machine.
