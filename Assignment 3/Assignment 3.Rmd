@@ -1,0 +1,121 @@
+---
+title: "Assignment 3 - Hierarchical Data"
+author: "Michael Francis"
+output: pdf_document
+classoption: landscape
+---
+
+
+```{r setup, include=FALSE, warnings=FALSE, message=FALSE}
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+
+
+library(readxl)
+library(tidyverse)
+library(jsonlite)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(grid)
+
+# read in shots data from a practice on 10-11-2019, using in-out device and apple watch
+data <- read_csv("C:/Users/mgffr/OneDrive/Desktop/MSDS 455/MSDS-455-Data-Visualization/Assignment 2/shots.csv")
+
+#net and midline at 0,0
+#serve box is (-21, 0) to (-21, 13.5), (-21, 0) to (-21, -13.5), (21, 0) to (21, 13.5), (21, 0) to (21, -13.5),
+#baseline at (-39, 13.5) to (-39, -13.5) and (39, 13.5) to (39, -13.5)
+
+out_bounds <- data.frame(
+  x = c(-39, 39, 39, -39, -39),
+  y = c(18, 18, -18, -18, 18)
+)
+
+t_lines <- data.frame(
+  x = c(21, 21, 21, -21, -21, -21),
+  y = c(-13.5, 13.5, 0, 0, -13.5, 13.5)
+)
+
+court <- ggplot() +
+  geom_path(data = out_bounds, aes(x = x, y = y)) +
+  geom_path(data = t_lines, aes(x = x, y = y)) +
+  geom_path(aes(x = c(-39, 39), y = c(13.5, 13.5))) + # lower singles lines
+  geom_path(aes(x = c(-39, 39), y = c(-13.5, -13.5))) + # upper singles lines
+  geom_path(aes(x = c(0,0), y = c(18, -18)), lty = 2) + # net line
+  ylim(c(-20, 20)) + xlim(c(-50, 50)) +
+  #scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+
+michael <- subset(data, data$playingPlayerID=="Michael")
+michael$in_out <- ifelse(michael$in_out==1, "In", "Out")
+
+strokecount <- michael %>%
+  select(stroke, shotID) %>%
+  group_by(stroke) %>%
+  summarise(Counts = n())
+
+strokecount <- strokecount %>%
+   mutate(stroke = factor(stroke, levels = stroke)) %>%
+   arrange(desc(stroke)) %>%
+   mutate(cumCounts = cumsum(Counts),
+          centres = cumCounts - Counts / 2,
+          percent = Counts / sum(Counts))
+
+strokecount1 <- michael %>%
+  select(stroke, shotID, in_out) %>%
+  group_by(stroke, in_out) %>%
+  summarise(Counts = n())
+
+strokecount1_sorted <- arrange(strokecount1, stroke, in_out) 
+strokecount1_sorted <- strokecount1_sorted %>%
+  group_by(stroke) %>%
+  mutate(labelPosition = cumsum(Counts))
+strokecount1_sorted$in_out <- as.factor(strokecount1_sorted$in_out)
+
+
+library(scales)
+
+p1 <- ggplot(strokecount, aes(x="", y=Counts, fill=stroke)) +
+  geom_bar(width = 1, stat = "identity") +
+  geom_text(x = 1.3, aes(y = centres, label = paste0(round(percent*100,2), "%"))) +
+  coord_polar("y", start=0) +
+  scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  ggtitle("Tennis Strokes") +
+  xlab("") +
+  ylab("") +
+  theme(axis.title = element_text(), 
+        plot.title = element_text(hjust = 0.5),
+        axis.text.x=element_blank())
+
+p2 <- ggplot(data=strokecount1_sorted, aes(x=stroke, y=Counts, fill=in_out)) +
+  geom_bar(stat="identity")+
+  scale_color_fivethirtyeight() +
+  theme_fivethirtyeight() +
+  ggtitle("Tennis Strokes by In/Out") +
+  theme(axis.title = element_text(), 
+        plot.title = element_text(hjust = 0.5))
+
+
+```
+
+# Tennis Ball Speed By Stroke
+
+```{r plot, echo=FALSE, fig.height=6.5, fig.width=15, warnings=FALSE, message=FALSE}
+grid.arrange(p1, p2, ncol=2)
+```
+
+\begin{flushright}
+Source: Francis, M (2020, July 17). [Tennis Singles Match] Retrieved from https://github.com/MichaelFrancis23/MSDS-455-Data-Visualization/blob/master/Assignment\%202/shots.csv
+\end{flushright}
+
+- Data was taken from an In/Out tennis camera on 10/11/2019 for one of my tennis practices using a ball machine.
+- A higher percentage of forehands and a higher percentage of second serves are hit during practice
+- A higher percentage of backhands are hit in for ground strokes and a higher percentage of second serves are hit in than first serves
